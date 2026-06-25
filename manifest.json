@@ -1,0 +1,12 @@
+{
+  "name": "Multi-language Generator",
+  "id": "952afa79-637d-4917-bb98-d6e73a984a63",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "isTool": true,
+  "relaunchButtons": [
+    { "command": "952afa79-637d-4917-bb98-d6e73a984a63", "name": "Multi-language Generator" }
+  ],
+  "ui": "ui.html"
+}
