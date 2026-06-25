@@ -3,6 +3,14 @@ const UI_WIDTH = 360;
 figma.showUI(__html__, { width: UI_WIDTH, height: 520, themeColors: true });
 figma.root.setRelaunchData({ '952afa79-637d-4917-bb98-d6e73a984a63': 'Multi-language Generator' });
 
+// Push Figma selection changes to UI so checkboxes can sync
+figma.on('selectionchange', () => {
+  figma.ui.postMessage({
+    type: 'selection-changed',
+    selectedIds: figma.currentPage.selection.map(n => n.id),
+  });
+});
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface TextNodeInfo {
@@ -17,6 +25,7 @@ type Msg =
   | { type: 'locate'; nodeId: string }
   | { type: 'rename'; nodeId: string; newName: string }
   | { type: 'rename-batch'; renames: { nodeId: string; newName: string }[] }
+  | { type: 'select-nodes'; nodeIds: string[] }
   | { type: 'generate'; languages: string[]; translations: Record<string, Record<string, string>>; checkedNodeNames: string[] }
   | { type: 'resize'; height: number };
 
@@ -24,6 +33,7 @@ type Msg =
 
 async function scanTextNodes(node: SceneNode, pathParts: string[] = []): Promise<TextNodeInfo[]> {
   const results: TextNodeInfo[] = [];
+  if (!node.visible) return results;
   const currentPath = [...pathParts, node.name];
 
   if (node.type === 'TEXT') {
@@ -47,18 +57,11 @@ async function scanTextNodes(node: SceneNode, pathParts: string[] = []): Promise
 async function loadAllFonts(node: TextNode): Promise<void> {
   if (node.characters.length === 0) return;
   const fontSet = new Set<string>();
-
-  if (typeof node.fontName !== 'symbol') {
-    fontSet.add(JSON.stringify(node.fontName));
-  }
-
+  if (typeof node.fontName !== 'symbol') fontSet.add(JSON.stringify(node.fontName));
   for (let i = 0; i < node.characters.length; i++) {
     const f = node.getRangeFontName(i, i + 1);
-    if (typeof f !== 'symbol') {
-      fontSet.add(JSON.stringify(f));
-    }
+    if (typeof f !== 'symbol') fontSet.add(JSON.stringify(f));
   }
-
   await Promise.all([...fontSet].map((f) => figma.loadFontAsync(JSON.parse(f) as FontName)));
 }
 
@@ -117,6 +120,19 @@ figma.ui.onmessage = async (msg: Msg) => {
     for (const { nodeId, newName } of msg.renames) {
       const node = await figma.getNodeByIdAsync(nodeId);
       if (node) node.name = newName;
+    }
+    return;
+  }
+
+  if (msg.type === 'select-nodes') {
+    const nodes: SceneNode[] = [];
+    for (const id of msg.nodeIds) {
+      const node = await figma.getNodeByIdAsync(id);
+      if (node && 'absoluteBoundingBox' in node) nodes.push(node as SceneNode);
+    }
+    if (nodes.length > 0) {
+      figma.currentPage.selection = nodes;
+      figma.viewport.scrollAndZoomIntoView(nodes);
     }
     return;
   }
