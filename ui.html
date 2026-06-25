@@ -1,1 +1,462 @@
-<!-- see repository for full content: pushed via Figma AI -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --brand:#00E99A; --brand-text:#003d24; --brand-tertiary:rgba(0,233,154,0.1); }
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; font-size:11px; line-height:1.4; background:var(--figma-color-bg); color:var(--figma-color-text); }
+
+  .section { padding:12px; border-bottom:1px solid var(--figma-color-border); }
+  .section-header { display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+  .step-badge { width:18px; height:18px; border-radius:50%; background:var(--brand); color:var(--brand-text); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .section-title { font-weight:600; font-size:11px; }
+
+  button { height:30px; padding:0 12px; border-radius:6px; border:none; font-size:11px; font-weight:500; cursor:pointer; font-family:inherit; }
+  button:disabled { opacity:0.38; cursor:not-allowed; }
+  .btn-primary { background:var(--brand); color:var(--brand-text); width:100%; }
+  .btn-secondary { background:var(--figma-color-bg-secondary); color:var(--figma-color-text); border:1px solid var(--figma-color-border); }
+  .btn-full { width:100%; }
+  .link-btn { background:none; border:none; height:auto; padding:0; font-size:10px; color:var(--brand); cursor:pointer; text-decoration:none; }
+
+  /* Node list */
+  .node-list { --name-col-width:100px; overflow-y:auto; border:1px solid var(--figma-color-border); border-bottom:none; border-radius:6px 6px 0 0; background:var(--figma-color-bg-secondary); height:260px; min-height:80px; margin-top:6px; }
+  .node-list-header { display:flex; align-items:center; padding:5px 8px; border-bottom:1px solid var(--figma-color-border); background:var(--figma-color-bg-tertiary,var(--figma-color-bg-secondary)); position:sticky; top:0; z-index:2; user-select:none; }
+  .col-check { width:20px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .node-list-header .col-name { width:var(--name-col-width); min-width:var(--name-col-width); max-width:var(--name-col-width); flex-shrink:0; font-size:10px; font-weight:700; color:var(--figma-color-text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .node-list-header .col-divider { width:7px; align-self:stretch; flex-shrink:0; cursor:col-resize; display:flex; align-items:center; justify-content:center; }
+  .node-list-header .col-divider::after { content:''; width:1px; height:100%; background:var(--figma-color-border); display:block; }
+  .node-list-header .col-text { flex:1; font-size:10px; font-weight:700; color:var(--figma-color-text-secondary); min-width:0; }
+  .node-list-header .col-action { width:32px; flex-shrink:0; }
+
+  /* Frame group header row */
+  .frame-group-row { display:flex; align-items:center; gap:4px; padding:5px 8px; height:28px; background:var(--figma-color-bg); border-bottom:1px solid var(--figma-color-border); cursor:pointer; user-select:none; position:sticky; top:28px; z-index:1; }
+  .frame-group-row:hover { background:var(--figma-color-bg-secondary); }
+  .frame-toggle { width:12px; height:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--figma-color-text-tertiary); transition:transform 0.15s; font-size:9px; }
+  .frame-toggle.collapsed { transform:rotate(-90deg); }
+  .frame-icon-wrap { width:14px; height:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--figma-color-text-secondary); }
+  .frame-group-name { flex:1; font-size:10px; font-weight:600; color:var(--figma-color-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* Text node row */
+  .node-item { display:flex; align-items:center; gap:8px; padding:0 8px 0 24px; border-bottom:1px solid var(--figma-color-border); min-height:28px; }
+  .node-item:last-child { border-bottom:none; }
+  .node-name { font-weight:500; color:var(--figma-color-text-secondary); width:var(--name-col-width); min-width:var(--name-col-width); max-width:var(--name-col-width); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex-shrink:0; font-size:10px; font-family:'SF Mono','Fira Code',monospace; }
+  .node-divider { width:7px; flex-shrink:0; align-self:stretch; display:flex; align-items:center; justify-content:center; }
+  .node-divider::after { content:''; width:1px; height:100%; background:var(--figma-color-border); display:block; }
+  .node-text { color:var(--figma-color-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1; font-size:10px; }
+  .empty-text { color:var(--figma-color-text-tertiary); font-style:italic; }
+  .locate-btn { background:none; border:1px solid var(--figma-color-border); border-radius:4px; height:20px; padding:0 5px; font-size:10px; color:var(--brand); cursor:pointer; flex-shrink:0; font-family:inherit; white-space:nowrap; }
+  .locate-btn:hover { background:var(--brand-tertiary); }
+
+  /* Edit input */
+  .name-col-cell { width:var(--name-col-width); min-width:var(--name-col-width); max-width:var(--name-col-width); flex-shrink:0; display:flex; align-items:stretch; }
+  .name-input { min-width:0; width:100%; height:28px; padding:0 4px; border:1px solid #C8C8C8; border-radius:0; background:var(--figma-color-bg); color:var(--figma-color-text); font-size:10px; font-family:'SF Mono','Fira Code',monospace; font-weight:500; outline:none; }
+  .name-input.modified { border-color:var(--brand); }
+
+  /* List resize handle */
+  .list-resize-handle { height:8px; cursor:ns-resize; border:1px solid var(--figma-color-border); border-top:none; border-radius:0 0 6px 6px; background:var(--figma-color-bg-secondary); display:flex; align-items:center; justify-content:center; }
+  .list-resize-handle::after { content:''; width:28px; height:2px; border-radius:1px; background:var(--figma-color-border); }
+  .list-resize-handle:hover::after { background:var(--figma-color-text-tertiary); }
+
+  .count-badge { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:16px; padding:0 5px; border-radius:8px; background:#FFD600; color:#333; font-size:10px; font-weight:700; margin-left:4px; }
+  input[type="checkbox"] { width:12px; height:12px; cursor:pointer; accent-color:var(--brand); flex-shrink:0; }
+
+  .node-controls-row { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+  .node-controls-left { display:flex; align-items:center; gap:4px; }
+  .node-action-row { display:flex; gap:6px; margin-top:6px; }
+  .node-action-row button { flex:1; }
+  .rename-confirm-bar { display:flex; gap:6px; align-items:center; margin-top:6px; }
+  .rename-confirm-bar .btn-primary { width:auto; flex:1; }
+
+  .csv-row { display:flex; gap:6px; align-items:center; margin-bottom:6px; }
+  .file-name { font-size:10px; color:var(--figma-color-text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
+  textarea { width:100%; height:88px; border:1px solid var(--figma-color-border); border-radius:6px; padding:7px 8px; font-size:10px; font-family:'SF Mono','Fira Code',monospace; background:var(--figma-color-bg-secondary); color:var(--figma-color-text); resize:vertical; margin-bottom:6px; line-height:1.5; }
+  textarea:focus { outline:none; border-color:var(--brand); }
+
+  .lang-grid { display:flex; flex-wrap:wrap; gap:5px; margin:8px 0 10px; }
+  .lang-chip { display:flex; align-items:center; gap:3px; padding:3px 9px; border-radius:12px; border:1px solid var(--figma-color-border); background:var(--figma-color-bg-secondary); font-size:11px; font-weight:500; cursor:pointer; user-select:none; transition:background 0.1s,color 0.1s; color:var(--figma-color-text-secondary); }
+  .lang-chip.on { background:var(--brand); color:var(--brand-text); border-color:transparent; }
+  .chip-check { font-size:10px; }
+
+  .status-bar { padding:8px 12px; font-size:10px; color:var(--figma-color-text-secondary); min-height:28px; display:flex; align-items:center; gap:6px; }
+  .status-bar.error { color:var(--figma-color-text-danger); }
+  .status-bar.success { color:var(--figma-color-text-success,#1a8c5e); }
+  .tip { font-size:10px; color:var(--figma-color-text-tertiary); line-height:1.5; margin-top:4px; }
+  code { font-family:'SF Mono','Fira Code',monospace; background:var(--figma-color-bg-secondary); padding:0 3px; border-radius:3px; }
+  .hidden { display:none !important; }
+  .select-all-row { display:flex; justify-content:flex-end; gap:6px; margin-bottom:2px; }
+</style>
+</head>
+<body>
+
+<!-- Step 1 -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-badge">1</div>
+    <span class="section-title">扫描Frame中的文字</span>
+  </div>
+  <button class="btn-secondary btn-full" onclick="scan()">扫描选中Frame</button>
+
+  <div id="scanResult" class="hidden">
+    <div class="node-controls-row">
+      <div class="node-controls-left">
+        <span style="font-weight:600;" id="nodeCountLabel">文字节点</span>
+        <span class="count-badge" id="nodeCount">0</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="link-btn" id="nodeSelectToggleBtn" onclick="toggleSelectAllNodes()">全选</button>
+        <span id="previewControls" style="display:none;">
+          <button class="link-btn" onclick="exitRenamePreview()">取消</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="node-list" id="nodeList"></div>
+    <div class="list-resize-handle" id="listResizeHandle"></div>
+
+    <div class="node-action-row" id="nodeActionBtns">
+      <button class="btn-secondary" onclick="enterRenamePreview()">按内容重命名</button>
+      <button class="btn-secondary" id="editToggleBtn" onclick="toggleEditMode()">编辑节点名</button>
+    </div>
+
+    <div id="renameConfirmBar" class="rename-confirm-bar hidden">
+      <button class="btn-primary" id="renameConfirmBtn" onclick="confirmRenameByContent()">确认重命名</button>
+      <button class="btn-secondary" onclick="exitRenamePreview()">取消</button>
+    </div>
+
+    <p class="tip" id="nodeTip" style="margin-top:6px;">
+      节点名将对照为 CSV 中的第一列的 Key。请编辑节点名以匹配 CSV 中的 Key。
+    </p>
+  </div>
+</div>
+
+<!-- Step 2 -->
+<div class="section" id="csvSection" style="display:none">
+  <div class="section-header">
+    <div class="step-badge">2</div>
+    <span class="section-title">导入 CSV 翻译</span>
+  </div>
+  <p class="tip" style="margin-bottom:8px;">第一列：<code>key</code>（匹配节点名）。其他列：语言代码。</p>
+  <div class="csv-row">
+    <button class="btn-secondary" onclick="exportTemplate()">导出模版</button>
+    <span class="file-name" id="fileName">未选择文件</span>
+    <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">浏览文件…</button>
+    <input type="file" id="fileInput" accept=".csv,text/csv" style="display:none" onchange="loadFile(this)">
+  </div>
+  <textarea id="csvArea"
+    placeholder="key,en,zh-CN,ja,fr&#10;btn_ok,OK,好的,OK,OK&#10;title,Hello,你好,こんにちは,Bonjour"
+    oninput="onCSVInput()"></textarea>
+  <button class="btn-secondary btn-full" onclick="parseCSV()">解析 CSV</button>
+</div>
+
+<!-- Step 3 -->
+<div class="section" id="langSection" style="display:none">
+  <div class="section-header">
+    <div class="step-badge">3</div>
+    <span class="section-title">生成语言变体</span>
+  </div>
+  <div class="select-all-row">
+    <button class="link-btn" onclick="selectAll(true)">全选</button>
+    <button class="link-btn" onclick="selectAll(false)">取消</button>
+  </div>
+  <div class="lang-grid" id="langGrid"></div>
+  <button class="btn-primary" id="generateBtn" onclick="generate()">生成变体</button>
+  <p class="tip" style="margin-top:8px;">副本将放置在源Frame下方的新 Section 中。生成前请保持源Frame处于选中状态。</p>
+</div>
+
+<div class="status-bar" id="status"></div>
+
+<script>
+const FRAME_ICON = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 1.5H2A.5.5 0 001.5 2v2M8 1.5h2a.5.5 0 01.5.5v2M10.5 8v2a.5.5 0 01-.5.5H8M4 10.5H2a.5.5 0 01-.5-.5V8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+
+let frameGroups=[], scannedNodes=[], checkedNodeNames=new Set();
+let collapsedFrames=new Set();
+let parsedData=null, selectedLangs=new Set(), csvDirty=false, editMode=false;
+let renamePreviewMode=false, renamePreviewNodes=[], renamePreviewChecked=new Set();
+
+function scan(){setStatus('扫描中…');post({type:'scan'});}
+function locate(id){post({type:'locate',nodeId:id});}
+
+function toggleFrameCollapse(frameId){
+  if(collapsedFrames.has(frameId))collapsedFrames.delete(frameId);
+  else collapsedFrames.add(frameId);
+  renderNodeList();
+}
+
+function selectAllNodes(on){
+  scannedNodes.forEach(n=>{if(on)checkedNodeNames.add(n.name);else checkedNodeNames.delete(n.name);});
+  document.querySelectorAll('.node-checkbox').forEach(cb=>{cb.checked=on;});
+  updateNodeSelectBtn();
+}
+function toggleSelectAllNodes(){
+  if(renamePreviewMode){
+    const all=renamePreviewNodes.every(n=>renamePreviewChecked.has(n.id));
+    renamePreviewNodes.forEach(n=>{if(!all)renamePreviewChecked.add(n.id);else renamePreviewChecked.delete(n.id);});
+    document.querySelectorAll('.node-checkbox').forEach(cb=>{cb.checked=!all;});
+    updateNodeSelectBtn();updateRenameConfirmBtn();
+  } else {
+    const all=scannedNodes.length>0&&scannedNodes.every(n=>checkedNodeNames.has(n.name));
+    selectAllNodes(!all);
+  }
+}
+function updateNodeSelectBtn(){
+  const btn=document.getElementById('nodeSelectToggleBtn');if(!btn)return;
+  const all=renamePreviewMode
+    ?(renamePreviewNodes.length>0&&renamePreviewNodes.every(n=>renamePreviewChecked.has(n.id)))
+    :(scannedNodes.length>0&&scannedNodes.every(n=>checkedNodeNames.has(n.name)));
+  btn.textContent=all?'取消全选':'全选';
+}
+
+function toggleEditMode(){
+  editMode=!editMode;
+  document.getElementById('editToggleBtn').textContent=editMode?'完成':'编辑节点名';
+  renderNodeList();
+}
+
+function enterRenamePreview(){
+  const mm=scannedNodes.filter(n=>n.text.trim()&&n.text.trim()!==n.name);
+  if(!mm.length){setStatus('所有节点名已与文字内容一致，无需重命名。');return;}
+  if(editMode){editMode=false;document.getElementById('editToggleBtn').textContent='编辑节点名';}
+  renamePreviewMode=true;renamePreviewNodes=mm;renamePreviewChecked=new Set(mm.map(n=>n.id));
+  document.getElementById('nodeCountLabel').textContent='名称不一致的节点';
+  document.getElementById('nodeCount').textContent=mm.length;
+  document.getElementById('nodeActionBtns').style.display='none';
+  document.getElementById('previewControls').style.display='';
+  document.getElementById('renameConfirmBar').classList.remove('hidden');
+  document.getElementById('nodeTip').classList.add('hidden');
+  renderNodeList();updateNodeSelectBtn();updateRenameConfirmBtn();
+}
+function exitRenamePreview(){
+  renamePreviewMode=false;renamePreviewNodes=[];renamePreviewChecked=new Set();
+  document.getElementById('nodeCountLabel').textContent='文字节点';
+  document.getElementById('nodeCount').textContent=scannedNodes.length;
+  document.getElementById('nodeActionBtns').style.display='';
+  document.getElementById('previewControls').style.display='none';
+  document.getElementById('renameConfirmBar').classList.add('hidden');
+  document.getElementById('nodeTip').classList.remove('hidden');
+  renderNodeList();updateNodeSelectBtn();
+}
+function updateRenameConfirmBtn(){
+  const btn=document.getElementById('renameConfirmBtn');if(!btn)return;
+  const c=renamePreviewChecked.size;
+  btn.textContent=c>0?'确认重命名 '+c+' 个节点':'确认重命名';btn.disabled=c===0;
+}
+function confirmRenameByContent(){
+  const rn=renamePreviewNodes.filter(n=>renamePreviewChecked.has(n.id)).map(n=>({nodeId:n.id,newName:n.text.trim(),oldName:n.name}));
+  if(!rn.length){setStatus('请至少勾选一个节点。','error');return;}
+  rn.forEach(r=>{
+    if(checkedNodeNames.has(r.oldName)){checkedNodeNames.delete(r.oldName);checkedNodeNames.add(r.newName);}
+    const nd=scannedNodes.find(n=>n.id===r.nodeId);if(nd)nd.name=r.newName;
+  });
+  post({type:'rename-batch',renames:rn.map(r=>({nodeId:r.nodeId,newName:r.newName}))});
+  const c=rn.length;exitRenamePreview();setStatus('已将 '+c+' 个节点按文字内容重命名。','success');
+}
+
+function makeNodeItem(n){
+  const item=document.createElement('div');
+  item.className='node-item';
+  const cbWrap=document.createElement('span');cbWrap.className='col-check';
+  const cb=document.createElement('input');cb.type='checkbox';cb.className='node-checkbox';cb.checked=checkedNodeNames.has(n.name);
+  cb.addEventListener('change',()=>{if(cb.checked)checkedNodeNames.add(n.name);else checkedNodeNames.delete(n.name);updateNodeSelectBtn();});
+  cbWrap.appendChild(cb);item.appendChild(cbWrap);
+  if(editMode){
+    const nc=document.createElement('div');nc.className='name-col-cell';
+    const orig=n.name;const inp=document.createElement('input');
+    inp.className='name-input';inp.value=n.name;inp.title=n.name;
+    inp.addEventListener('input',()=>inp.classList.toggle('modified',inp.value.trim()!==orig));
+    inp.addEventListener('blur',()=>commitRename(n,inp.value));
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
+    nc.appendChild(inp);item.appendChild(nc);
+  } else {
+    const ns=document.createElement('span');ns.className='node-name';ns.title=n.name;ns.textContent=n.name;item.appendChild(ns);
+  }
+  const dv=document.createElement('span');dv.className='node-divider';item.appendChild(dv);
+  const ts=document.createElement('span');
+  ts.innerHTML=n.text?'<span class="node-text" title="'+esc(n.text)+'">'+esc(n.text)+'</span>':'<span class="node-text empty-text">(空)</span>';
+  item.appendChild(ts.firstChild);
+  const lb=document.createElement('button');lb.className='locate-btn';lb.textContent='定位';lb.onclick=()=>locate(n.id);item.appendChild(lb);
+  return item;
+}
+function makePreviewItem(n){
+  const item=document.createElement('div');item.className='node-item';
+  const cbWrap=document.createElement('span');cbWrap.className='col-check';
+  const cb=document.createElement('input');cb.type='checkbox';cb.className='node-checkbox';cb.checked=renamePreviewChecked.has(n.id);
+  cb.addEventListener('change',()=>{if(cb.checked)renamePreviewChecked.add(n.id);else renamePreviewChecked.delete(n.id);updateNodeSelectBtn();updateRenameConfirmBtn();});
+  cbWrap.appendChild(cb);item.appendChild(cbWrap);
+  const ns=document.createElement('span');ns.className='node-name';ns.title=n.name;ns.textContent=n.name;item.appendChild(ns);
+  const dv=document.createElement('span');dv.className='node-divider';item.appendChild(dv);
+  const nw=document.createElement('span');nw.className='node-text';nw.style.color='var(--brand)';nw.title=n.text.trim();nw.textContent=n.text.trim();item.appendChild(nw);
+  const lb=document.createElement('button');lb.className='locate-btn';lb.textContent='定位';lb.onclick=()=>locate(n.id);item.appendChild(lb);
+  return item;
+}
+
+function renderNodeList(){
+  const list=document.getElementById('nodeList');list.innerHTML='';
+  if(renamePreviewMode){
+    if(!renamePreviewNodes.length){list.innerHTML='<div class="node-item" style="color:var(--figma-color-text-tertiary);padding:8px;">没有不一致的节点。</div>';return;}
+    const h=document.createElement('div');h.className='node-list-header';
+    h.innerHTML='<span class="col-check"></span><span class="col-name">当前节点名</span><span class="col-divider"></span><span class="col-text" style="color:var(--brand);font-weight:700;">将改为</span><span class="col-action"></span>';
+    list.appendChild(h);renamePreviewNodes.forEach(n=>list.appendChild(makePreviewItem(n)));return;
+  }
+  if(!scannedNodes.length){list.innerHTML='<div class="node-item" style="color:var(--figma-color-text-tertiary);padding:8px;">选中内容中未找到文字节点。</div>';return;}
+  const h=document.createElement('div');h.className='node-list-header';
+  h.innerHTML='<span class="col-check"></span><span class="col-name">节点名</span><span class="col-divider"></span><span class="col-text">文字内容</span><span class="col-action"></span>';
+  list.appendChild(h);
+  const showGroups=frameGroups.length>1;
+  frameGroups.forEach(group=>{
+    if(!group.nodes.length)return;
+    if(showGroups){
+      const collapsed=collapsedFrames.has(group.frameId);
+      const row=document.createElement('div');row.className='frame-group-row';
+      row.onclick=()=>toggleFrameCollapse(group.frameId);
+      const toggle=document.createElement('span');
+      toggle.className='frame-toggle'+(collapsed?' collapsed':'');
+      toggle.innerHTML='<svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 2.5L4 5.5L6.5 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      row.appendChild(toggle);
+      const icon=document.createElement('span');icon.className='frame-icon-wrap';icon.innerHTML=FRAME_ICON;row.appendChild(icon);
+      const name=document.createElement('span');name.className='frame-group-name';name.textContent=group.frameName;row.appendChild(name);
+      list.appendChild(row);
+      if(collapsed)return;
+    }
+    group.nodes.forEach(n=>list.appendChild(makeNodeItem(n)));
+  });
+}
+
+function commitRename(node,newName){
+  newName=newName.trim();if(!newName||newName===node.name)return;
+  if(checkedNodeNames.has(node.name)){checkedNodeNames.delete(node.name);checkedNodeNames.add(newName);}
+  node.name=newName;post({type:'rename',nodeId:node.id,newName});setStatus('节点已重命名为"'+newName+'"。','success');
+}
+
+function exportTemplate(){
+  if(!scannedNodes.length){setStatus('请先扫描 Frame 再导出模版。','error');return;}
+  const keys=[...new Set(scannedNodes.map(n=>n.name))];
+  const langs=parsedData?parsedData.languages:['en','zh-CN','ja','ko'];
+  const e2=v=>(v.includes(',')||v.includes('"')||v.includes('\n'))?'"'+v.replace(/"/g,'""')+'"':v;
+  const csv='﻿'+['key',...langs].map(e2).join(',')+'\r\n'+keys.map(k=>[e2(k),...langs.map(()=>'')].join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='translation-template.csv';a.click();
+  URL.revokeObjectURL(url);
+  setStatus('已导出模版，共 '+keys.length+' 个键。','success');
+}
+
+function loadFile(input){
+  const file=input.files[0];if(!file)return;
+  document.getElementById('fileName').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{document.getElementById('csvArea').value=e.target.result;csvDirty=true;setStatus('文件已加载——点击"解析 CSV"继续。');};
+  reader.readAsText(file,'UTF-8');
+}
+function onCSVInput(){csvDirty=true;}
+
+function parseCSVLine(line){
+  const r=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+    else if(c===','&&!inQ){r.push(cur);cur='';}else cur+=c;
+  }
+  r.push(cur);return r.map(s=>s.trim());
+}
+function parseCSV(){
+  const raw=document.getElementById('csvArea').value.trim();
+  if(!raw){setStatus('请先粘贴 CSV 数据。','error');return;}
+  const lines=raw.split(/\r?\n/);
+  if(lines.length<2){setStatus('CSV 必须至少有一个标题行和一个数据行。','error');return;}
+  const headers=parseCSVLine(lines[0]);
+  if(headers[0].toLowerCase()!=='key'){setStatus('第一列标题必须为 "key"。','error');return;}
+  const languages=headers.slice(1).filter(Boolean);
+  if(!languages.length){setStatus('"key" 后未找到语言列。','error');return;}
+  const rows={};let rowCount=0;
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim())continue;
+    const cols=parseCSVLine(lines[i]);const key=cols[0];if(!key)continue;
+    rows[key]={};languages.forEach((lang,j)=>{rows[key][lang]=cols[j+1]??'';});rowCount++;
+  }
+  parsedData={languages,rows};selectedLangs=new Set(languages);csvDirty=false;
+  const grid=document.getElementById('langGrid');grid.innerHTML='';
+  languages.forEach(lang=>{
+    const chip=document.createElement('div');chip.className='lang-chip on';chip.dataset.lang=lang;
+    chip.innerHTML='<span class="chip-check">&#x2713;</span> '+lang;
+    chip.onclick=()=>toggleLang(chip,lang);grid.appendChild(chip);
+  });
+  document.getElementById('langSection').style.display='';
+  setStatus('已解析 '+languages.length+' 种语言，'+rowCount+' 个键。','success');resize();
+}
+function toggleLang(chip,lang){
+  if(selectedLangs.has(lang)){selectedLangs.delete(lang);chip.classList.remove('on');chip.querySelector('.chip-check').textContent='';}
+  else{selectedLangs.add(lang);chip.classList.add('on');chip.querySelector('.chip-check').textContent='&#x2713;';}
+}
+function selectAll(on){
+  if(!parsedData)return;
+  parsedData.languages.forEach(lang=>{if(on)selectedLangs.add(lang);else selectedLangs.delete(lang);});
+  document.querySelectorAll('.lang-chip').forEach(chip=>{
+    const a=selectedLangs.has(chip.dataset.lang);
+    chip.classList.toggle('on',a);chip.querySelector('.chip-check').textContent=a?'&#x2713;':'';
+  });
+}
+
+function generate(){
+  if(!parsedData){setStatus('请先解析 CSV。','error');return;}
+  if(csvDirty){setStatus('CSV 已更改——请再次点击"解析 CSV"。','error');return;}
+  const langs=[...selectedLangs];if(!langs.length){setStatus('请至少选择一种语言。','error');return;}
+  if(!checkedNodeNames.size){setStatus('请至少勾选一个文字节点。','error');return;}
+  document.getElementById('generateBtn').disabled=true;
+  setStatus('正在生成 '+langs.length+' 个变体…');
+  const translations={};
+  langs.forEach(lang=>{translations[lang]={};Object.entries(parsedData.rows).forEach(([k,v])=>{translations[lang][k]=v[lang]||'';});});
+  post({type:'generate',languages:langs,translations,checkedNodeNames:[...checkedNodeNames]});
+}
+
+window.onmessage=e=>{
+  const msg=e.data.pluginMessage;if(!msg)return;
+  if(msg.type==='scan-result'){
+    frameGroups=msg.frameGroups;scannedNodes=frameGroups.flatMap(g=>g.nodes);
+    checkedNodeNames=new Set(scannedNodes.map(n=>n.name));
+    collapsedFrames=new Set();editMode=false;renamePreviewMode=false;
+    document.getElementById('editToggleBtn').textContent='编辑节点名';
+    document.getElementById('nodeCountLabel').textContent='文字节点';
+    document.getElementById('nodeCount').textContent=scannedNodes.length;
+    document.getElementById('nodeActionBtns').style.display='';
+    document.getElementById('previewControls').style.display='none';
+    document.getElementById('renameConfirmBar').classList.add('hidden');
+    document.getElementById('nodeTip').classList.remove('hidden');
+    renderNodeList();updateNodeSelectBtn();
+    document.getElementById('scanResult').classList.remove('hidden');
+    document.getElementById('csvSection').style.display='';
+    const label=frameGroups.map(g=>g.frameName).join('、');
+    setStatus(scannedNodes.length>0?'在"'+label+'"中找到 '+scannedNodes.length+' 个文字节点。':'"'+label+'"中没有文字节点。');
+    resize();
+  }
+  if(msg.type==='progress')setStatus(msg.message);
+  if(msg.type==='generate-done'){document.getElementById('generateBtn').disabled=false;setStatus('完成！已生成 '+msg.count+' 套变体。','success');}
+  if(msg.type==='error'){setStatus(msg.message,'error');document.getElementById('generateBtn').disabled=false;}
+};
+
+function initDragResizes(){
+  const list=document.getElementById('nodeList');
+  const hh=document.getElementById('listResizeHandle');
+  let hd=false,hY=0,hH=0;
+  hh.addEventListener('mousedown',e=>{hd=true;hY=e.clientY;hH=list.offsetHeight;e.preventDefault();});
+  document.addEventListener('mousemove',e=>{if(!hd)return;list.style.height=Math.max(80,hH+(e.clientY-hY))+'px';});
+  document.addEventListener('mouseup',()=>{hd=false;});
+  let cd=false,cX=0,cW=100;
+  list.addEventListener('mousedown',e=>{
+    if(!e.target.classList||!e.target.classList.contains('col-divider')||!e.target.closest('.node-list-header'))return;
+    cd=true;cX=e.clientX;cW=parseFloat(getComputedStyle(list).getPropertyValue('--name-col-width'))||100;e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{if(!cd)return;list.style.setProperty('--name-col-width',Math.max(50,Math.min(220,cW+(e.clientX-cX)))+'px');});
+  document.addEventListener('mouseup',()=>{cd=false;});
+}
+
+function post(msg){parent.postMessage({pluginMessage:msg},'*');}
+function setStatus(t,l){const el=document.getElementById('status');el.textContent=t;el.className='status-bar'+(l?' '+l:'');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function resize(){setTimeout(()=>{post({type:'resize',height:document.body.scrollHeight+4});},60);}
+
+initDragResizes();
+resize();
+</script>
+</body>
+</html>
